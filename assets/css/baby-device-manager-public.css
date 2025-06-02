@@ -1,0 +1,189 @@
+.bdm-container {
+    margin: 20px 0;
+}
+
+.bdm-container .bdm-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 30px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* 设备列表 */
+.bdm-device-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 默认3列 */
+    gap: 16px;
+    margin: 0;
+}
+
+/* 每行显示4个 */
+.bdm-device-list[style*="--devices-per-row: 4"] {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* 每行显示5个 */
+.bdm-device-list[style*="--devices-per-row: 5"] {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+/* 每行显示6个 */
+.bdm-device-list[style*="--devices-per-row: 6"] {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+/* 每行显示2个 */
+.bdm-device-list[style*="--devices-per-row: 2"] {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* 每行显示1个 */
+.bdm-device-list[style*="--devices-per-row: 1"] {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+.bdm-device-item {
+    border-radius: 12px;
+    border: 1px solid #000;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 8px 16px -4px rgba(44, 45, 48, 0.1);
+    min-height: 400px;
+    position: relative;
+}
+
+/* 响应式布局 */
+@media screen and (max-width: 1200px) {
+    .bdm-device-list {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .bdm-device-list {
+        grid-template-columns: repeat(1, 1fr) !important;
+    }
+}
+
+.bdm-device-info {
+    padding: 8px 16px 16px 16px;
+    margin-top: 12px;
+}
+
+.bdm-device-name {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+}
+
+.bdm-device-name:hover {
+    color: #ff7fa7;
+}
+
+.bdm-device-spec {
+    font-size: 12px;
+    color: rgba(60, 60, 67, 0.8);
+    line-height: 1;
+    margin-bottom: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bdm-device-description {
+    line-height: 20px;
+    color: rgba(60, 60, 67, 0.8);
+    height: 60px;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    font-size: 14px;
+}
+
+.bdm-device-link {
+    font-size: 12px;
+    background: #9999992b;
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.bdm-device-link:hover {
+    background: #425AEF;
+    color: #fff;
+}
+
+.bdm-device-cover {
+    width: 100%;
+    height: 200px;
+    background: #f7f7f9;
+    display: flex;
+    justify-content: center;
+}
+
+.bdm-device-image {
+    object-fit: cover;
+    height: 100%;
+}
+
+.bdm-device-toolbar {
+    display: flex;
+    justify-content: space-between;
+    position: absolute;
+    bottom: 12px;
+    left: 0;
+    width: 100%;
+    padding: 0 16px;
+}
+
+/* 按钮样式 */
+.bdm-button {
+    font-size: 12px;
+    background: #9999992b;
+    border: none;
+    color: rgba(60, 60, 67, 0.8);
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.bdm-button:hover {
+    background: #425AEF;
+    color: #fff;
+}
+
+/* 在售状态按钮样式 */
+.bdm-button.status-onsale {
+    color: #ff4f87 !important;
+}
+
+/* 停售状态按钮样式 */
+.bdm-button.status-stopped {
+    color: #999 !important;
+}
+
+/* 使用属性选择器来匹配在售状态 */
+.bdm-button[data-status="在售"] {
+    color: #ff4f87;
+}
+
+/* 调试信息 */
+.bdm-debug {
+    display: none;
+    background: #f0f0f0;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+}
+
+.bdm-debug.visible {
+    display: block;
+} 

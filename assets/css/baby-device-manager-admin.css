@@ -1,0 +1,109 @@
+.bdm-admin-wrap {
+    margin: 20px;
+}
+
+.bdm-admin-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.bdm-admin-form-table th {
+    width: 200px;
+}
+
+.bdm-admin-table .column-description {
+    width: 30%;
+}
+
+.bdm-admin-table .column-status {
+    width: 100px;
+}
+
+.bdm-admin-table .column-actions {
+    width: 120px;
+}
+
+.bdm-admin-button {
+    margin-right: 5px;
+}
+
+.bdm-admin-notice {
+    margin: 15px 0;
+}
+
+.bdm-admin-tablenav {
+    margin: 15px 0;
+}
+
+.bdm-admin-tablenav .actions {
+    padding: 8px 0;
+}
+
+/* 设备列表样式 */
+.bdm-admin-device-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.bdm-admin-device-item {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.bdm-admin-device-cover {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.bdm-admin-device-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bdm-admin-device-info {
+    padding: 15px;
+}
+
+.bdm-admin-device-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.bdm-admin-device-description {
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.bdm-admin-device-toolbar {
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 响应式设计 */
+@media screen and (max-width: 782px) {
+    .bdm-admin-form-table th {
+        width: 100%;
+        display: block;
+    }
+    
+    .bdm-admin-form-table td {
+        display: block;
+        padding: 0;
+    }
+    
+    .bdm-admin-device-list {
+        grid-template-columns: 1fr;
+    }
+} 
