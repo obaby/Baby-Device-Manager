@@ -99,6 +99,72 @@ if (!function_exists('baby_device_manager_upgrade')) {
     }
 }
 
+// 手动触发升级
+if (isset($_GET['page']) && $_GET['page'] === 'baby-device-manager' && isset($_GET['force_upgrade'])) {
+    try {
+        global $wpdb;
+        
+        // 检查表是否存在
+        $devices_table = $wpdb->prefix . 'baby_devices';
+        $groups_table = $wpdb->prefix . 'baby_device_groups';
+        
+        // 检查设备表的隐藏字段
+        $devices_has_hidden = $wpdb->get_var("SHOW COLUMNS FROM $devices_table LIKE 'is_hidden'");
+        if (!$devices_has_hidden) {
+            $result = $wpdb->query("ALTER TABLE $devices_table ADD COLUMN is_hidden tinyint(1) NOT NULL DEFAULT 0");
+            if ($result === false) {
+                throw new Exception('添加设备表隐藏字段失败: ' . $wpdb->last_error);
+            }
+        }
+        
+        // 检查分组表的隐藏字段
+        $groups_has_hidden = $wpdb->get_var("SHOW COLUMNS FROM $groups_table LIKE 'is_hidden'");
+        if (!$groups_has_hidden) {
+            $result = $wpdb->query("ALTER TABLE $groups_table ADD COLUMN is_hidden tinyint(1) NOT NULL DEFAULT 0");
+            if ($result === false) {
+                throw new Exception('添加分组表隐藏字段失败: ' . $wpdb->last_error);
+            }
+        }
+        
+        // 更新版本号
+        update_option('baby_device_manager_version', BABY_DEVICE_MANAGER_VERSION);
+        
+        // 重定向到成功页面
+        wp_redirect(admin_url('admin.php?page=baby-device-manager&upgraded=1'));
+        exit;
+        
+    } catch (Exception $e) {
+        // 记录错误
+        error_log('Baby Device Manager upgrade error: ' . $e->getMessage());
+        
+        // 显示错误消息
+        wp_die(
+            '升级失败：' . esc_html($e->getMessage()),
+            '升级错误',
+            array('back_link' => true)
+        );
+    }
+}
+
+// 添加缺失的字段
+function baby_device_manager_add_missing_columns() {
+    global $wpdb;
+    
+    // 设备表
+    $devices_table = $wpdb->prefix . 'baby_devices';
+    $devices_has_hidden = $wpdb->get_var("SHOW COLUMNS FROM $devices_table LIKE 'is_hidden'");
+    if (!$devices_has_hidden) {
+        $wpdb->query("ALTER TABLE $devices_table ADD COLUMN is_hidden tinyint(1) NOT NULL DEFAULT 0");
+    }
+    
+    // 分组表
+    $groups_table = $wpdb->prefix . 'baby_device_groups';
+    $groups_has_hidden = $wpdb->get_var("SHOW COLUMNS FROM $groups_table LIKE 'is_hidden'");
+    if (!$groups_has_hidden) {
+        $wpdb->query("ALTER TABLE $groups_table ADD COLUMN is_hidden tinyint(1) NOT NULL DEFAULT 0");
+    }
+}
+
 // 初始化插件
 if (!function_exists('baby_device_manager_init')) {
     function baby_device_manager_init() {
@@ -135,6 +201,7 @@ if (!function_exists('baby_device_manager_init')) {
 
 // 在插件加载时初始化
 add_action('plugins_loaded', 'baby_device_manager_init');
+add_action('admin_init', 'baby_device_manager_add_missing_columns');
 
 // 加载前端样式
 if (!function_exists('baby_device_manager_enqueue_styles')) {

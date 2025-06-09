@@ -44,7 +44,8 @@ if (isset($_POST['submit_device'])) {
                 if ($result !== false) {
                     echo '<div class="notice notice-success"><p>设备更新成功！</p></div>';
                 } else {
-                    echo '<div class="notice notice-error"><p>更新设备失败，请重试！</p></div>';
+                    $error = $wpdb->last_error;
+                    echo '<div class="notice notice-error"><p>更新设备失败：' . esc_html($error) . '</p></div>';
                 }
             } else {
                 // 添加新设备
