@@ -7,6 +7,34 @@ class Baby_Device_Manager_Admin {
     public function __construct($plugin_name, $version) {
         $this->plugin_name = $plugin_name;
         $this->version = $version;
+        
+        // 添加处理删除设备的动作
+        add_action('admin_init', array($this, 'handle_device_actions'));
+    }
+
+    public function handle_device_actions() {
+        if (isset($_GET['page']) && $_GET['page'] === 'baby-device-manager' && 
+            isset($_GET['action']) && $_GET['action'] === 'delete' && 
+            isset($_GET['id']) && isset($_GET['_wpnonce'])) {
+            
+            $device_id = intval($_GET['id']);
+            if (wp_verify_nonce($_GET['_wpnonce'], 'delete_device_' . $device_id)) {
+                global $wpdb;
+                $result = $wpdb->delete(
+                    $wpdb->prefix . 'baby_devices',
+                    array('id' => $device_id),
+                    array('%d')
+                );
+                
+                if ($result !== false) {
+                    wp_redirect(admin_url('admin.php?page=baby-device-manager&message=deleted'));
+                    exit;
+                } else {
+                    wp_redirect(admin_url('admin.php?page=baby-device-manager&error=delete_failed'));
+                    exit;
+                }
+            }
+        }
     }
 
     public function enqueue_styles() {

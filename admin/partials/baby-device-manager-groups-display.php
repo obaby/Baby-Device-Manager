@@ -12,6 +12,7 @@ if (isset($_POST['submit_group'])) {
         $name = sanitize_text_field($_POST['name']);
         $description = sanitize_textarea_field($_POST['description']);
         $sort_order = intval($_POST['sort_order']);
+        $is_hidden = isset($_POST['is_hidden']) ? 1 : 0;
         
         if (empty($name)) {
             echo '<div class="notice notice-error"><p>分组名称不能为空！</p></div>';
@@ -33,7 +34,8 @@ if (isset($_POST['submit_group'])) {
                         array(
                             'name' => $name,
                             'description' => $description,
-                            'sort_order' => $sort_order
+                            'sort_order' => $sort_order,
+                            'is_hidden' => $is_hidden
                         ),
                         array('id' => intval($_POST['group_id']))
                     );
@@ -45,7 +47,8 @@ if (isset($_POST['submit_group'])) {
                         array(
                             'name' => $name,
                             'description' => $description,
-                            'sort_order' => $sort_order
+                            'sort_order' => $sort_order,
+                            'is_hidden' => $is_hidden
                         )
                     );
                     echo '<div class="notice notice-success"><p>分组已添加！</p></div>';
@@ -121,6 +124,16 @@ $groups = $wpdb->get_results("SELECT * FROM $groups_table ORDER BY sort_order AS
                         <p class="description">数字越小越靠前</p>
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row"><label for="is_hidden">隐藏分组</label></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="is_hidden" id="is_hidden" value="1" 
+                                   <?php echo ($edit_group && $edit_group->is_hidden) ? 'checked' : ''; ?>>
+                            隐藏此分组（隐藏后在前台不会显示）
+                        </label>
+                    </td>
+                </tr>
             </table>
             
             <p class="submit">
@@ -144,6 +157,7 @@ $groups = $wpdb->get_results("SELECT * FROM $groups_table ORDER BY sort_order AS
                         <th>排序</th>
                         <th>分组名称</th>
                         <th>描述</th>
+                        <th>状态</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -153,6 +167,7 @@ $groups = $wpdb->get_results("SELECT * FROM $groups_table ORDER BY sort_order AS
                             <td><?php echo esc_html($group->sort_order); ?></td>
                             <td><?php echo esc_html($group->name); ?></td>
                             <td><?php echo esc_html($group->description); ?></td>
+                            <td><?php echo $group->is_hidden ? '<span class="dashicons dashicons-hidden" title="已隐藏"></span>' : '<span class="dashicons dashicons-visibility" title="显示中"></span>'; ?></td>
                             <td>
                                 <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=baby-device-manager-groups&action=edit&id=' . $group->id), 'edit_group'); ?>" 
                                    class="button button-small">编辑</a>

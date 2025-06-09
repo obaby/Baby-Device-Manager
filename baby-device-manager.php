@@ -3,7 +3,7 @@
  * Plugin Name: Baby Device Manager
  * Plugin URI: https://h4ck.org.cn
  * Description: 一个功能强大的WordPress设备管理系统插件，支持设备分组管理、设备信息管理、自定义排序、状态跟踪等功能。可以轻松管理各类设备，包括设备分组、设备状态、设备图片、产品链接等信息，并提供美观的前端展示界面。支持多种排序方式和筛选功能，是设备管理的理想解决方案。
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: obaby
  * Author URI: https://h4ck.org.cn
  * Text Domain: baby-device-manager
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // 定义插件常量
-define('BABY_DEVICE_MANAGER_VERSION', '1.0.4');
+define('BABY_DEVICE_MANAGER_VERSION', '1.0.5');
 define('BABY_DEVICE_MANAGER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BABY_DEVICE_MANAGER_PLUGIN_URL', plugin_dir_url(__FILE__));
 

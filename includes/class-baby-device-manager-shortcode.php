@@ -43,7 +43,7 @@ class Baby_Device_Manager_Shortcode {
         $sql = "SELECT d.*, g.name as group_name, g.sort_order as group_sort_order 
                 FROM $devices_table d 
                 INNER JOIN $groups_table g ON d.group_id = g.id 
-                WHERE 1=1";
+                WHERE d.is_hidden = 0 AND g.is_hidden = 0";
         
         if (!empty($atts['group'])) {
             $sql .= $wpdb->prepare(" AND g.name = %s", $atts['group']);

@@ -15,6 +15,7 @@ if (isset($_POST['submit_device'])) {
         $image_url = esc_url_raw($_POST['device_image_url']);
         $product_url = esc_url_raw($_POST['device_product_url']);
         $sort_order = intval($_POST['device_sort_order']);
+        $is_hidden = isset($_POST['device_is_hidden']) ? 1 : 0;
 
         if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['id'])) {
             // 更新设备
@@ -27,10 +28,11 @@ if (isset($_POST['submit_device'])) {
                     'status' => $status,
                     'image_url' => $image_url,
                     'product_url' => $product_url,
-                    'sort_order' => $sort_order
+                    'sort_order' => $sort_order,
+                    'is_hidden' => $is_hidden
                 ),
                 array('id' => intval($_GET['id'])),
-                array('%s', '%d', '%s', '%s', '%s', '%s', '%d'),
+                array('%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d'),
                 array('%d')
             );
             echo '<div class="notice notice-success"><p>设备更新成功！</p></div>';
@@ -45,9 +47,10 @@ if (isset($_POST['submit_device'])) {
                     'status' => $status,
                     'image_url' => $image_url,
                     'product_url' => $product_url,
-                    'sort_order' => $sort_order
+                    'sort_order' => $sort_order,
+                    'is_hidden' => $is_hidden
                 ),
-                array('%s', '%d', '%s', '%s', '%s', '%s', '%d')
+                array('%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d')
             );
             echo '<div class="notice notice-success"><p>设备添加成功！</p></div>';
         }
@@ -139,6 +142,16 @@ if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['id'])) {
                     <td>
                         <input type="number" name="device_sort_order" id="device_sort_order" class="small-text" value="<?php echo $device ? esc_attr($device->sort_order) : '0'; ?>">
                         <p class="description">数字越小越靠前显示，默认为0</p>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="device_is_hidden">隐藏设备</label></th>
+                    <td>
+                        <label>
+                            <input type="checkbox" name="device_is_hidden" id="device_is_hidden" value="1" 
+                                   <?php echo ($device && $device->is_hidden) ? 'checked' : ''; ?>>
+                            隐藏此设备（隐藏后在前台不会显示）
+                        </label>
                     </td>
                 </tr>
             </table>
