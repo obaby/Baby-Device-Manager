@@ -29,7 +29,7 @@ if (isset($_POST['submit_group'])) {
             } else {
                 if (isset($_POST['group_id'])) {
                     // 更新现有分组
-                    $wpdb->update(
+                    $result = $wpdb->update(
                         $groups_table,
                         array(
                             'name' => $name,
@@ -37,21 +37,34 @@ if (isset($_POST['submit_group'])) {
                             'sort_order' => $sort_order,
                             'is_hidden' => $is_hidden
                         ),
-                        array('id' => intval($_POST['group_id']))
+                        array('id' => intval($_POST['group_id'])),
+                        array('%s', '%s', '%d', '%d'),
+                        array('%d')
                     );
-                    echo '<div class="notice notice-success"><p>分组已更新！</p></div>';
+                    
+                    if ($result !== false) {
+                        echo '<div class="notice notice-success"><p>分组已更新！</p></div>';
+                    } else {
+                        echo '<div class="notice notice-error"><p>更新分组失败，请重试！</p></div>';
+                    }
                 } else {
                     // 添加新分组
-                    $wpdb->insert(
+                    $result = $wpdb->insert(
                         $groups_table,
                         array(
                             'name' => $name,
                             'description' => $description,
                             'sort_order' => $sort_order,
                             'is_hidden' => $is_hidden
-                        )
+                        ),
+                        array('%s', '%s', '%d', '%d')
                     );
-                    echo '<div class="notice notice-success"><p>分组已添加！</p></div>';
+                    
+                    if ($result !== false) {
+                        echo '<div class="notice notice-success"><p>分组已添加！</p></div>';
+                    } else {
+                        echo '<div class="notice notice-error"><p>添加分组失败，请重试！</p></div>';
+                    }
                 }
             }
         }

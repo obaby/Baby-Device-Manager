@@ -40,21 +40,17 @@ class Baby_Device_Manager_Shortcode {
         }
 
         // 构建查询
-        $sql = "SELECT d.*, g.name as group_name, g.sort_order as group_sort_order 
-                FROM $devices_table d 
-                INNER JOIN $groups_table g ON d.group_id = g.id 
-                WHERE d.is_hidden = 0 AND g.is_hidden = 0";
-        
-        if (!empty($atts['group'])) {
-            $sql .= $wpdb->prepare(" AND g.name = %s", $atts['group']);
-        }
-        
-        if (!empty($atts['status'])) {
-            $sql .= $wpdb->prepare(" AND d.status = %s", $atts['status']);
-        }
-        
-        // 先按分组排序，再按设备排序
-        $sql .= " ORDER BY g.sort_order ASC, g.name ASC, d." . esc_sql($atts['orderby']) . " " . esc_sql($atts['order']) . ", d.name ASC";
+        $sql = $wpdb->prepare(
+            "SELECT d.*, g.name as group_name, g.sort_order as group_sort_order 
+            FROM $devices_table d 
+            INNER JOIN $groups_table g ON d.group_id = g.id 
+            WHERE d.is_hidden = 0 AND g.is_hidden = 0 %s %s
+            ORDER BY g.sort_order ASC, g.name ASC, d.%s %s, d.name ASC",
+            !empty($atts['group']) ? $wpdb->prepare(" AND g.name = %s", $atts['group']) : '',
+            !empty($atts['status']) ? $wpdb->prepare(" AND d.status = %s", $atts['status']) : '',
+            esc_sql($atts['orderby']),
+            esc_sql($atts['order'])
+        );
         
         $devices = $wpdb->get_results($sql);
         

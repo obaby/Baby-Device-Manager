@@ -3,7 +3,7 @@
  * Plugin Name: Baby Device Manager
  * Plugin URI: https://h4ck.org.cn
  * Description: 一个功能强大的WordPress设备管理系统插件，支持设备分组管理、设备信息管理、自定义排序、状态跟踪等功能。可以轻松管理各类设备，包括设备分组、设备状态、设备图片、产品链接等信息，并提供美观的前端展示界面。支持多种排序方式和筛选功能，是设备管理的理想解决方案。
- * Version: 1.0.5
+ * Version: 1.0.7
  * Author: obaby
  * Author URI: https://h4ck.org.cn
  * Text Domain: baby-device-manager
@@ -18,77 +18,133 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// 防止重复加载
+if (defined('BABY_DEVICE_MANAGER_LOADED')) {
+    return;
+}
+
+// 检查插件目录名称是否正确
+$plugin_dir = basename(dirname(__FILE__));
+if (strtolower($plugin_dir) !== 'babydevicemanager') {
+    error_log('Baby Device Manager: 插件目录名称必须为 babydevicemanager，当前目录: ' . $plugin_dir);
+    return;
+}
+
+define('BABY_DEVICE_MANAGER_LOADED', true);
+
 // 定义插件常量
-define('BABY_DEVICE_MANAGER_VERSION', '1.0.5');
+define('BABY_DEVICE_MANAGER_VERSION', '1.0.7');
 define('BABY_DEVICE_MANAGER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BABY_DEVICE_MANAGER_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-// 加载必要的文件
+// 加载主类文件
 require_once BABY_DEVICE_MANAGER_PLUGIN_DIR . 'includes/class-baby-device-manager.php';
-require_once BABY_DEVICE_MANAGER_PLUGIN_DIR . 'includes/class-baby-device-manager-shortcode.php';
 
-// 激活插件时的钩子
+// 激活、停用和卸载钩子
 register_activation_hook(__FILE__, array('Baby_Device_Manager', 'activate'));
-
-// 停用插件时的钩子
 register_deactivation_hook(__FILE__, array('Baby_Device_Manager', 'deactivate'));
-
-// 升级插件时的钩子
-add_action('plugins_loaded', 'baby_device_manager_check_version');
-function baby_device_manager_check_version() {
-    $current_version = get_option('baby_device_manager_version', '1.0.0');
-    if (version_compare($current_version, BABY_DEVICE_MANAGER_VERSION, '<')) {
-        // 执行升级操作
-        baby_device_manager_upgrade($current_version);
-        // 更新版本号
-        update_option('baby_device_manager_version', BABY_DEVICE_MANAGER_VERSION);
-    }
-}
+register_uninstall_hook(__FILE__, array('Baby_Device_Manager', 'uninstall'));
 
 // 升级函数
-function baby_device_manager_upgrade($old_version) {
-    global $wpdb;
-    
-    // 从1.0.0升级到1.0.1
-    if (version_compare($old_version, '1.0.1', '<')) {
-        // 添加新的设置选项
-        if (!get_option('bdm_devices_per_row')) {
-            update_option('bdm_devices_per_row', 3);
+if (!function_exists('baby_device_manager_upgrade')) {
+    function baby_device_manager_upgrade($old_version) {
+        global $wpdb;
+        
+        try {
+            // 确保数据库表存在
+            if (!Baby_Device_Manager::check_tables()) {
+                // 如果表不存在，重新创建
+                Baby_Device_Manager::activate();
+                return;
+            }
+
+            // 从1.0.0升级到1.0.1
+            if (version_compare($old_version, '1.0.1', '<')) {
+                if (!get_option('bdm_devices_per_row')) {
+                    update_option('bdm_devices_per_row', 3);
+                }
+            }
+            
+            // 从1.0.1升级到1.0.2
+            if (version_compare($old_version, '1.0.2', '<')) {
+                $devices_table = $wpdb->prefix . 'baby_devices';
+                $wpdb->query("ALTER TABLE $devices_table MODIFY COLUMN status varchar(50) NOT NULL DEFAULT '在售'");
+            }
+
+            // 从1.0.4升级到1.0.6
+            if (version_compare($old_version, '1.0.6', '<')) {
+                $groups_table = $wpdb->prefix . 'baby_device_groups';
+                $devices_table = $wpdb->prefix . 'baby_devices';
+                
+                // 检查分组表的隐藏字段
+                $groups_has_hidden = $wpdb->get_var("SHOW COLUMNS FROM $groups_table LIKE 'is_hidden'");
+                if (!$groups_has_hidden) {
+                    $wpdb->query("ALTER TABLE $groups_table ADD COLUMN is_hidden tinyint(1) NOT NULL DEFAULT 0");
+                }
+                
+                // 检查设备表的隐藏字段
+                $devices_has_hidden = $wpdb->get_var("SHOW COLUMNS FROM $devices_table LIKE 'is_hidden'");
+                if (!$devices_has_hidden) {
+                    $wpdb->query("ALTER TABLE $devices_table ADD COLUMN is_hidden tinyint(1) NOT NULL DEFAULT 0");
+                }
+            }
+
+            // 更新版本号
+            update_option('baby_device_manager_version', BABY_DEVICE_MANAGER_VERSION);
+            
+        } catch (Exception $e) {
+            error_log('Baby Device Manager upgrade error: ' . $e->getMessage());
+            throw $e;
         }
-    }
-    
-    // 从1.0.1升级到1.0.2
-    if (version_compare($old_version, '1.0.2', '<')) {
-        // 更新数据库表结构
-        $devices_table = $wpdb->prefix . 'baby_devices';
-        $wpdb->query("ALTER TABLE $devices_table MODIFY COLUMN status varchar(50) NOT NULL DEFAULT '在售'");
-    }
-    
-    // 从1.0.2升级到1.0.3
-    if (version_compare($old_version, '1.0.3', '<')) {
-        // 添加新的状态选项
-        $devices_table = $wpdb->prefix . 'baby_devices';
-        $wpdb->query("ALTER TABLE $devices_table MODIFY COLUMN status varchar(50) NOT NULL DEFAULT '在售'");
     }
 }
 
 // 初始化插件
-function baby_device_manager_init() {
-    $plugin = new Baby_Device_Manager();
-    $plugin->run();
-    
-    // 初始化 shortcode
-    new Baby_Device_Manager_Shortcode();
+if (!function_exists('baby_device_manager_init')) {
+    function baby_device_manager_init() {
+        try {
+            // 加载其他依赖文件
+            require_once BABY_DEVICE_MANAGER_PLUGIN_DIR . 'includes/class-baby-device-manager-shortcode.php';
+            
+            // 检查版本并升级
+            $current_version = get_option('baby_device_manager_version', '1.0.0');
+            if (version_compare($current_version, BABY_DEVICE_MANAGER_VERSION, '<')) {
+                baby_device_manager_upgrade($current_version);
+            }
+
+            // 初始化主类
+            $plugin = new Baby_Device_Manager();
+            $plugin->run();
+            
+            // 初始化 shortcode
+            new Baby_Device_Manager_Shortcode();
+            
+        } catch (Exception $e) {
+            // 记录错误日志
+            error_log('Baby Device Manager initialization error: ' . $e->getMessage());
+            
+            // 显示管理员通知
+            if (is_admin()) {
+                add_action('admin_notices', function() use ($e) {
+                    echo '<div class="notice notice-error"><p>Baby Device Manager 初始化失败: ' . esc_html($e->getMessage()) . '</p></div>';
+                });
+            }
+        }
+    }
 }
+
+// 在插件加载时初始化
 add_action('plugins_loaded', 'baby_device_manager_init');
 
 // 加载前端样式
-function baby_device_manager_enqueue_styles() {
-    wp_enqueue_style(
-        'baby-device-manager-public',
-        BABY_DEVICE_MANAGER_PLUGIN_URL . 'assets/css/baby-device-manager-public.css',
-        array(),
-        BABY_DEVICE_MANAGER_VERSION
-    );
+if (!function_exists('baby_device_manager_enqueue_styles')) {
+    function baby_device_manager_enqueue_styles() {
+        wp_enqueue_style(
+            'baby-device-manager-public',
+            BABY_DEVICE_MANAGER_PLUGIN_URL . 'assets/css/baby-device-manager-public.css',
+            array(),
+            BABY_DEVICE_MANAGER_VERSION
+        );
+    }
 }
 add_action('wp_enqueue_scripts', 'baby_device_manager_enqueue_styles'); 

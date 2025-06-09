@@ -17,42 +17,58 @@ if (isset($_POST['submit_device'])) {
         $sort_order = intval($_POST['device_sort_order']);
         $is_hidden = isset($_POST['device_is_hidden']) ? 1 : 0;
 
-        if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['id'])) {
-            // 更新设备
-            $wpdb->update(
-                $wpdb->prefix . 'baby_devices',
-                array(
-                    'name' => $name,
-                    'group_id' => $group_id,
-                    'description' => $description,
-                    'status' => $status,
-                    'image_url' => $image_url,
-                    'product_url' => $product_url,
-                    'sort_order' => $sort_order,
-                    'is_hidden' => $is_hidden
-                ),
-                array('id' => intval($_GET['id'])),
-                array('%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d'),
-                array('%d')
-            );
-            echo '<div class="notice notice-success"><p>设备更新成功！</p></div>';
+        if (empty($name)) {
+            echo '<div class="notice notice-error"><p>设备名称不能为空！</p></div>';
+        } else if (empty($group_id)) {
+            echo '<div class="notice notice-error"><p>请选择设备分组！</p></div>';
         } else {
-            // 添加新设备
-            $wpdb->insert(
-                $wpdb->prefix . 'baby_devices',
-                array(
-                    'name' => $name,
-                    'group_id' => $group_id,
-                    'description' => $description,
-                    'status' => $status,
-                    'image_url' => $image_url,
-                    'product_url' => $product_url,
-                    'sort_order' => $sort_order,
-                    'is_hidden' => $is_hidden
-                ),
-                array('%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d')
-            );
-            echo '<div class="notice notice-success"><p>设备添加成功！</p></div>';
+            if (isset($_GET['action']) && $_GET['action'] == 'edit' && isset($_GET['id'])) {
+                // 更新设备
+                $result = $wpdb->update(
+                    $wpdb->prefix . 'baby_devices',
+                    array(
+                        'name' => $name,
+                        'group_id' => $group_id,
+                        'description' => $description,
+                        'status' => $status,
+                        'image_url' => $image_url,
+                        'product_url' => $product_url,
+                        'sort_order' => $sort_order,
+                        'is_hidden' => $is_hidden
+                    ),
+                    array('id' => intval($_GET['id'])),
+                    array('%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d'),
+                    array('%d')
+                );
+                
+                if ($result !== false) {
+                    echo '<div class="notice notice-success"><p>设备更新成功！</p></div>';
+                } else {
+                    echo '<div class="notice notice-error"><p>更新设备失败，请重试！</p></div>';
+                }
+            } else {
+                // 添加新设备
+                $result = $wpdb->insert(
+                    $wpdb->prefix . 'baby_devices',
+                    array(
+                        'name' => $name,
+                        'group_id' => $group_id,
+                        'description' => $description,
+                        'status' => $status,
+                        'image_url' => $image_url,
+                        'product_url' => $product_url,
+                        'sort_order' => $sort_order,
+                        'is_hidden' => $is_hidden
+                    ),
+                    array('%s', '%d', '%s', '%s', '%s', '%s', '%d', '%d')
+                );
+                
+                if ($result !== false) {
+                    echo '<div class="notice notice-success"><p>设备添加成功！</p></div>';
+                } else {
+                    echo '<div class="notice notice-error"><p>添加设备失败，请重试！</p></div>';
+                }
+            }
         }
     }
 }
