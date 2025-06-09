@@ -31,6 +31,58 @@ if (isset($_POST['submit_settings'])) {
     echo '<div class="notice notice-success"><p>设置已保存！</p></div>';
 }
 
+// 处理 Redis 连接测试
+if (isset($_POST['test_redis']) && check_admin_referer('test_redis')) {
+    try {
+        if (!class_exists('Redis')) {
+            throw new Exception('Redis 扩展未安装');
+        }
+
+        $redis = new Redis();
+        $connected = $redis->connect(
+            get_option('bdm_redis_host', '127.0.0.1'),
+            get_option('bdm_redis_port', 6379)
+        );
+
+        if (!$connected) {
+            throw new Exception('无法连接到 Redis 服务器');
+        }
+
+        if (get_option('bdm_redis_password')) {
+            if (!$redis->auth(get_option('bdm_redis_password'))) {
+                throw new Exception('Redis 密码验证失败');
+            }
+        }
+
+        if (get_option('bdm_redis_database')) {
+            if (!$redis->select(get_option('bdm_redis_database'))) {
+                throw new Exception('无法选择指定的 Redis 数据库');
+            }
+        }
+
+        // 测试写入和读取
+        $test_key = 'baby_device_manager_test_' . time();
+        $test_value = 'test_' . uniqid();
+        
+        if (!$redis->set($test_key, $test_value)) {
+            throw new Exception('Redis 写入测试失败');
+        }
+        
+        $read_value = $redis->get($test_key);
+        if ($read_value !== $test_value) {
+            throw new Exception('Redis 读取测试失败');
+        }
+        
+        // 清理测试数据
+        $redis->del($test_key);
+        $redis->close();
+
+        echo '<div class="notice notice-success"><p>Redis 连接测试成功！</p></div>';
+    } catch (Exception $e) {
+        echo '<div class="notice notice-error"><p>Redis 连接测试失败：' . esc_html($e->getMessage()) . '</p></div>';
+    }
+}
+
 // 处理缓存清理
 if (isset($_POST['clear_cache']) && check_admin_referer('clear_cache')) {
     try {
@@ -80,6 +132,44 @@ $redis_host = get_option('bdm_redis_host', '127.0.0.1');
 $redis_port = get_option('bdm_redis_port', 6379);
 $redis_password = get_option('bdm_redis_password', '');
 $redis_database = get_option('bdm_redis_database', 0);
+
+// 检查 Redis 连接状态
+$redis_status = array(
+    'extension_installed' => class_exists('Redis'),
+    'connected' => false,
+    'info' => array(),
+    'error' => ''
+);
+
+if ($redis_status['extension_installed'] && $redis_enabled) {
+    try {
+        $redis = new Redis();
+        $connected = $redis->connect($redis_host, $redis_port);
+        
+        if ($connected) {
+            if ($redis_password) {
+                $redis->auth($redis_password);
+            }
+            
+            if ($redis_database) {
+                $redis->select($redis_database);
+            }
+            
+            $redis_status['connected'] = true;
+            $redis_status['info'] = $redis->info();
+            
+            // 获取插件相关的缓存键数量
+            $keys = $redis->keys('baby_device_manager_*');
+            $redis_status['cache_keys'] = count($keys);
+            
+            $redis->close();
+        } else {
+            $redis_status['error'] = '无法连接到 Redis 服务器';
+        }
+    } catch (Exception $e) {
+        $redis_status['error'] = $e->getMessage();
+    }
+}
 ?>
 
 <div class="wrap">
@@ -148,6 +238,68 @@ $redis_database = get_option('bdm_redis_database', 0);
             </table>
             <p class="submit">
                 <input type="submit" name="submit_settings" class="button button-primary" value="保存设置">
+            </p>
+        </form>
+    </div>
+    
+    <div class="card">
+        <h2>Redis 连接状态</h2>
+        <table class="form-table">
+            <tr>
+                <th scope="row">Redis 扩展</th>
+                <td>
+                    <?php if ($redis_status['extension_installed']): ?>
+                        <span class="dashicons dashicons-yes" style="color: #46b450;"></span> 已安装
+                    <?php else: ?>
+                        <span class="dashicons dashicons-no" style="color: #dc3232;"></span> 未安装
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">连接状态</th>
+                <td>
+                    <?php if ($redis_enabled): ?>
+                        <?php if ($redis_status['connected']): ?>
+                            <span class="dashicons dashicons-yes" style="color: #46b450;"></span> 已连接
+                        <?php else: ?>
+                            <span class="dashicons dashicons-no" style="color: #dc3232;"></span> 未连接
+                            <?php if ($redis_status['error']): ?>
+                                <p class="description">错误信息：<?php echo esc_html($redis_status['error']); ?></p>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <span class="dashicons dashicons-marker" style="color: #ffb900;"></span> 已禁用
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php if ($redis_status['connected']): ?>
+                <tr>
+                    <th scope="row">Redis 版本</th>
+                    <td><?php echo esc_html($redis_status['info']['redis_version'] ?? '未知'); ?></td>
+                </tr>
+                <tr>
+                    <th scope="row">运行时间</th>
+                    <td><?php echo esc_html($redis_status['info']['uptime_in_days'] ?? '0'); ?> 天</td>
+                </tr>
+                <tr>
+                    <th scope="row">内存使用</th>
+                    <td><?php echo esc_html(round(($redis_status['info']['used_memory'] ?? 0) / 1024 / 1024, 2)); ?> MB</td>
+                </tr>
+                <tr>
+                    <th scope="row">缓存键数量</th>
+                    <td><?php echo esc_html($redis_status['cache_keys'] ?? 0); ?> 个</td>
+                </tr>
+            <?php endif; ?>
+        </table>
+    </div>
+    
+    <div class="card">
+        <h2>Redis 连接测试</h2>
+        <form method="post" action="">
+            <?php wp_nonce_field('test_redis'); ?>
+            <p>点击下面的按钮测试 Redis 连接。</p>
+            <p class="submit">
+                <input type="submit" name="test_redis" class="button" value="测试连接">
             </p>
         </form>
     </div>
